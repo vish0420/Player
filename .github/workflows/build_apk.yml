@@ -29,10 +29,13 @@ jobs:
           cp -r _scaffold/android ./android
           rm -rf _scaffold
 
+      - name: Update compileSdk version
+        run: |
+          sed -i 's/compileSdk .*/compileSdk 36/' android/app/build.gradle
+
       - name: Accept Android licenses
         run: |
           yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses || true
-          yes | $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager --licenses || true
 
       - name: Add required permissions to AndroidManifest.xml
         run: |
