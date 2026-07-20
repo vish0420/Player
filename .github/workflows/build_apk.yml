@@ -12,19 +12,27 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Set up Java
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
           channel: stable
-
-      - name: Show Flutter version
-        run: flutter --version
 
       - name: Scaffold native Android project
         run: |
           flutter create --platforms=android --org com.example.videoplayer --project-name video_player_app _scaffold
           cp -r _scaffold/android ./android
           rm -rf _scaffold
+
+      - name: Accept Android licenses
+        run: |
+          yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses || true
+          yes | $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager --licenses || true
 
       - name: Add required permissions to AndroidManifest.xml
         run: |
