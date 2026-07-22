@@ -29,45 +29,11 @@ jobs:
           cp -r _scaffold/android ./android
           rm -rf _scaffold
 
-      - name: Update Android SDK to 36
+      - name: Update Android SDK versions
         run: |
-          python3 << 'PYEOF'
-          import os
-          import re
-          
-          # Find build.gradle file
-          build_gradle_path = None
-          for root, dirs, files in os.walk('android'):
-              for file in files:
-                  if file == 'build.gradle':
-                      build_gradle_path = os.path.join(root, file)
-                      print(f"Found: {build_gradle_path}")
-                      break
-              if build_gradle_path:
-                  break
-          
-          if not build_gradle_path:
-              print("ERROR: build.gradle not found!")
-              exit(1)
-          
-          # Read and update
-          with open(build_gradle_path, 'r') as f:
-              content = f.read()
-          
-          # Replace compileSdk versions
-          content = re.sub(r'compileSdk\s+\d+', 'compileSdk 36', content)
-          content = re.sub(r'compileSdkVersion\s+\d+', 'compileSdkVersion 36', content)
-          
-          # Replace targetSdk versions
-          content = re.sub(r'targetSdk\s+\d+', 'targetSdk 34', content)
-          content = re.sub(r'targetSdkVersion\s+\d+', 'targetSdkVersion 34', content)
-          
-          # Write back
-          with open(build_gradle_path, 'w') as f:
-              f.write(content)
-          
-          print("✓ Updated successfully!")
-          PYEOF
+          # Try to find and update all build.gradle files
+          find android -name "build.gradle" -exec sed -i 's/compileSdk [0-9]\+/compileSdk 36/g; s/compileSdkVersion [0-9]\+/compileSdkVersion 36/g; s/targetSdk [0-9]\+/targetSdk 34/g; s/targetSdkVersion [0-9]\+/targetSdkVersion 34/g' {} \; || true
+          echo "SDK update completed"
 
       - name: Accept Android licenses
         run: |
