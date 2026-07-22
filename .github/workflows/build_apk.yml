@@ -31,12 +31,43 @@ jobs:
 
       - name: Update Android SDK to 36
         run: |
-          # Update compileSdk to 36
-          sed -i 's/compileSdk 33/compileSdk 36/g' android/app/build.gradle
-          sed -i 's/compileSdkVersion 33/compileSdkVersion 36/g' android/app/build.gradle
-          # Also update targetSdk if needed
-          sed -i 's/targetSdk 33/targetSdk 34/g' android/app/build.gradle
-          sed -i 's/targetSdkVersion 33/targetSdkVersion 34/g' android/app/build.gradle
+          python3 << 'PYEOF'
+          import os
+          import re
+          
+          # Find build.gradle file
+          build_gradle_path = None
+          for root, dirs, files in os.walk('android'):
+              for file in files:
+                  if file == 'build.gradle':
+                      build_gradle_path = os.path.join(root, file)
+                      print(f"Found: {build_gradle_path}")
+                      break
+              if build_gradle_path:
+                  break
+          
+          if not build_gradle_path:
+              print("ERROR: build.gradle not found!")
+              exit(1)
+          
+          # Read and update
+          with open(build_gradle_path, 'r') as f:
+              content = f.read()
+          
+          # Replace compileSdk versions
+          content = re.sub(r'compileSdk\s+\d+', 'compileSdk 36', content)
+          content = re.sub(r'compileSdkVersion\s+\d+', 'compileSdkVersion 36', content)
+          
+          # Replace targetSdk versions
+          content = re.sub(r'targetSdk\s+\d+', 'targetSdk 34', content)
+          content = re.sub(r'targetSdkVersion\s+\d+', 'targetSdkVersion 34', content)
+          
+          # Write back
+          with open(build_gradle_path, 'w') as f:
+              f.write(content)
+          
+          print("✓ Updated successfully!")
+          PYEOF
 
       - name: Accept Android licenses
         run: |
@@ -53,4 +84,26 @@ jobs:
 
           permissions = (
               '    <uses-permission android:name="android.permission.READ_MEDIA_VIDEO"/>\n'
-              '    <uses-permission android:name="android.permission.R
+              '    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32"/>\n'
+              '    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" android:maxSdkVersion="29"/>\n'
+              '    <uses-permission android:name="android.permission.WAKE_LOCK"/>\n'
+          )
+
+          insert_at = content.index(">", content.index("<manifest")) + 1
+          content = content[:insert_at] + "\n" + permissions + content[insert_at:]
+
+          with open(path, "w") as f:
+              f.write(content)
+          PYEOF
+
+      - name: Get dependencies
+        run: flutter pub get
+
+      - name: Build release APK
+        run: flutter build apk --release
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: video-player-apk
+          path: build/app/outputs/flutter-apk/app-release.apk
