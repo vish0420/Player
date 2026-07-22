@@ -29,6 +29,15 @@ jobs:
           cp -r _scaffold/android ./android
           rm -rf _scaffold
 
+      - name: Update Android SDK to 36
+        run: |
+          # Update compileSdk to 36
+          sed -i 's/compileSdk 33/compileSdk 36/g' android/app/build.gradle
+          sed -i 's/compileSdkVersion 33/compileSdkVersion 36/g' android/app/build.gradle
+          # Also update targetSdk if needed
+          sed -i 's/targetSdk 33/targetSdk 34/g' android/app/build.gradle
+          sed -i 's/targetSdkVersion 33/targetSdkVersion 34/g' android/app/build.gradle
+
       - name: Accept Android licenses
         run: |
           yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses || true
@@ -44,26 +53,4 @@ jobs:
 
           permissions = (
               '    <uses-permission android:name="android.permission.READ_MEDIA_VIDEO"/>\n'
-              '    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32"/>\n'
-              '    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" android:maxSdkVersion="29"/>\n'
-              '    <uses-permission android:name="android.permission.WAKE_LOCK"/>\n'
-          )
-
-          insert_at = content.index(">", content.index("<manifest")) + 1
-          content = content[:insert_at] + "\n" + permissions + content[insert_at:]
-
-          with open(path, "w") as f:
-              f.write(content)
-          PYEOF
-
-      - name: Get dependencies
-        run: flutter pub get
-
-      - name: Build release APK
-        run: flutter build apk --release
-
-      - name: Upload APK artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: video-player-apk
-          path: build/app/outputs/flutter-apk/app-release.apk
+              '    <uses-permission android:name="android.permission.R
